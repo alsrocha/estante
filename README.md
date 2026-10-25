@@ -5,3 +5,7 @@ Organiza por assunto, por seção (nomes que você cria, como "Prateleira 1" ou 
 
 Abra pelo link do GitHub Pages no celular e use "Adicionar à tela inicial" para instalar.
 Os dados ficam guardados no próprio aparelho. Use Ajustes > Exportar backup de vez em quando.
+
+
+## Pendências
+App pessoal de metas, lembretes e avisos, na pasta `pendencias/`. Endereço: https://alsrocha.github.io/estante/pendencias/
