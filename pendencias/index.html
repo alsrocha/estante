@@ -1,0 +1,714 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3d3fb0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Pendências">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>Pendências</title>
+<style>
+/* Layout: cabeçalho fixo, conteúdo da aba atual, barra de abas fixa embaixo (alcance do polegar). */
+:root{
+  --bg:#f3f2ee; --surface:#ffffff; --ink:#1e1f2b; --muted:#646676; --line:#dddbd3;
+  --accent:#3d3fb0; --accent-ink:#ffffff; --accent-soft:#e3e3f7;
+  --ok:#1f7a4d; --ok-soft:#dcf0e4; --warn:#9a5b00; --warn-soft:#fbecd2; --danger:#b42323; --danger-soft:#f8dddd;
+  --r:12px; --font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#13141b; --surface:#1d1e28; --ink:#e8e8f0; --muted:#a0a1b2; --line:#2f3040;
+  --accent:#9ea2ff; --accent-ink:#14152a; --accent-soft:#2a2c52;
+  --ok:#6fd39e; --ok-soft:#173326; --warn:#f2b45c; --warn-soft:#3a2b14; --danger:#ff8a8a; --danger-soft:#3d1c1c; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#13141b; --surface:#1d1e28; --ink:#e8e8f0; --muted:#a0a1b2; --line:#2f3040;
+  --accent:#9ea2ff; --accent-ink:#14152a; --accent-soft:#2a2c52;
+  --ok:#6fd39e; --ok-soft:#173326; --warn:#f2b45c; --warn-soft:#3a2b14; --danger:#ff8a8a; --danger-soft:#3d1c1c; color-scheme:dark}
+*{box-sizing:border-box}
+html,body{background:var(--bg)}
+body{color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.45;margin:0;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+.wrap{max-width:640px;margin:0 auto;padding:0 16px calc(96px + env(safe-area-inset-bottom,0px))}
+header.top{position:sticky;top:0;z-index:5;background:var(--bg);padding:calc(12px + env(safe-area-inset-top,0px)) 0 10px;display:flex;align-items:center;gap:8px}
+header.top h1{font-size:1.45rem;margin:0;letter-spacing:-.2px}
+header.top .date{color:var(--muted);font-size:.85rem}
+header.top .grow{flex:1;min-width:0}
+.icon{width:44px;height:44px;border-radius:999px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;cursor:pointer;padding:0;flex:none}
+.icon svg{width:22px;height:22px}
+svg{fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+
+nav.tabs{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--surface);border-top:1px solid var(--line);display:flex;justify-content:center;padding-bottom:env(safe-area-inset-bottom,0px)}
+nav.tabs .in{display:grid;grid-template-columns:repeat(4,1fr);width:100%;max-width:640px}
+nav.tabs button{border:0;background:none;padding:8px 2px 10px;display:grid;justify-items:center;gap:2px;font-size:.78rem;color:var(--muted);cursor:pointer;position:relative;min-height:60px}
+nav.tabs button svg{width:24px;height:24px}
+nav.tabs button[aria-current="page"]{color:var(--accent);font-weight:600}
+nav.tabs .n{position:absolute;top:4px;left:calc(50% + 6px);background:var(--danger);color:#fff;border-radius:999px;font-size:.68rem;font-weight:700;min-width:18px;height:18px;padding:0 5px;display:grid;place-items:center}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px}
+.quick{display:grid;gap:10px;margin-top:4px}
+.seg{display:flex;gap:4px;background:var(--bg);border-radius:999px;padding:3px}
+.seg button{flex:1;border:0;background:transparent;border-radius:999px;padding:8px 6px;cursor:pointer;font-weight:500;color:var(--muted);min-height:38px}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.qrow{display:flex;gap:8px}
+input[type=text],input[type=date],input[type=time],input[type=number],select,textarea{width:100%;min-width:0;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--surface)}
+.quick input[type=text]{font-size:1.05rem}
+textarea{min-height:76px;resize:vertical}
+.btn{border:0;border-radius:10px;padding:12px 16px;font-weight:600;cursor:pointer;background:var(--accent);color:var(--accent-ink);min-height:46px;white-space:nowrap}
+.btn.sec{background:var(--surface);color:var(--ink);border:1px solid var(--line)}
+.btn.ghost{background:none;color:var(--accent);padding:8px 10px;min-height:0}
+.btn.danger{background:var(--danger-soft);color:var(--danger)}
+.btn.sm{padding:8px 12px;min-height:38px;font-size:.9rem}
+.link{background:none;border:0;color:var(--accent);padding:0;cursor:pointer;font-weight:500;text-decoration:underline;text-underline-offset:2px}
+.hint{color:var(--muted);font-size:.86rem}
+
+section.blk{margin-top:22px}
+section.blk>h2{font-size:1.02rem;margin:0 0 8px;display:flex;align-items:baseline;gap:8px}
+section.blk>h2 small{color:var(--muted);font-weight:500;font-size:.85rem;white-space:nowrap}
+section.blk>h2 .sp{flex:1}
+.list{display:grid;gap:8px}
+.empty{color:var(--muted);padding:14px;text-align:center;border:1px dashed var(--line);border-radius:var(--r);font-size:.92rem}
+
+.row{position:relative;border-radius:var(--r);overflow:hidden}
+.btn.wrap{white-space:normal}
+.row .bgL,.row .bgR{position:absolute;inset:0;visibility:hidden;display:flex;align-items:center;padding:0 20px;font-weight:600;font-size:.9rem}
+.row .bgL{background:var(--ok);color:#fff}
+.row .bgR{background:var(--danger);color:#fff;justify-content:flex-end}
+.ri{position:relative;display:flex;align-items:center;gap:10px;padding:10px 12px 10px 8px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);touch-action:pan-y;min-height:60px}
+.ri.anim{transition:transform .2s ease}
+.chk{width:44px;height:44px;flex:none;border:0;background:none;cursor:pointer;display:grid;place-items:center;padding:0;color:var(--muted)}
+.chk span{width:24px;height:24px;border-radius:999px;border:2px solid currentColor;display:grid;place-items:center}
+.chk.done{color:var(--ok)} .chk.done span{background:var(--ok);border-color:var(--ok)} .chk.done svg{stroke:#fff}
+.chk svg{width:14px;height:14px;stroke-width:3}
+.txt{flex:1;min-width:0;cursor:pointer;padding:4px 0}
+.txt .t{font-weight:600;overflow-wrap:anywhere}
+.row.isdone .t{text-decoration:line-through;color:var(--muted);font-weight:500}
+.txt .s{color:var(--muted);font-size:.85rem;display:flex;flex-wrap:wrap;gap:4px 10px;margin-top:2px}
+.txt .s a{color:var(--accent)}
+.row.late .ri{border-color:var(--danger);box-shadow:inset 4px 0 0 var(--danger)}
+.row.late .s .due{color:var(--danger);font-weight:600}
+.pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:.78rem;font-weight:700;white-space:nowrap}
+.pill.g{background:var(--ok-soft);color:var(--ok)} .pill.y{background:var(--warn-soft);color:var(--warn)} .pill.r{background:var(--danger-soft);color:var(--danger)} .pill.n{background:var(--bg);color:var(--muted)}
+.plus{border:1px solid var(--line);background:var(--bg);border-radius:999px;min-width:56px;height:40px;font-weight:700;cursor:pointer;flex:none}
+.bar{height:8px;border-radius:999px;background:var(--bg);overflow:hidden;margin-top:6px}
+.bar i{display:block;height:100%;background:var(--ok);border-radius:999px}
+.prog{display:flex;align-items:center;gap:12px}
+.prog .big{font-size:1.6rem;font-weight:700;font-variant-numeric:tabular-nums}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-top:4px;scrollbar-width:none}
+.chips button{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;white-space:nowrap;cursor:pointer;font-weight:500;min-height:40px}
+.chips button[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.banner{display:grid;gap:10px;margin-top:14px;background:var(--accent-soft);border:0}
+.banner p{margin:0}
+.banner .acts{display:flex;gap:8px;flex-wrap:wrap}
+.prio-alta .t::before{content:"!";display:inline-grid;place-items:center;width:18px;height:18px;border-radius:5px;background:var(--danger-soft);color:var(--danger);font-size:.78rem;margin-right:6px;vertical-align:1px}
+
+.set{display:grid;gap:14px}
+.set h3{margin:0;font-size:1rem}
+.field{display:grid;gap:6px}
+.field>span{font-size:.88rem;font-weight:600}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.sw{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:44px}
+.sw input{width:22px;height:22px;accent-color:var(--accent)}
+details{border-top:1px solid var(--line);padding-top:10px}
+details summary{cursor:pointer;font-weight:600;min-height:32px}
+details ol,details ul{padding-left:20px;margin:8px 0}
+details li{margin:4px 0}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.78rem}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:.9rem}
+.status::before{content:"";width:9px;height:9px;border-radius:999px;background:var(--muted)}
+.status.on::before{background:var(--ok)} .status.off::before{background:var(--danger)}
+
+dialog{border:0;padding:0;overflow-x:hidden;border-radius:18px 18px 0 0;width:100%;max-width:640px;margin:auto auto 0;background:var(--surface);color:var(--ink);max-height:92vh}
+dialog::backdrop{background:rgba(10,10,20,.45)}
+@media (min-width:700px){dialog{border-radius:18px;margin:auto}}
+dialog form{display:grid;grid-template-columns:minmax(0,1fr);gap:14px;padding:18px 16px calc(18px + env(safe-area-inset-bottom,0px))}
+dialog h2{margin:0;font-size:1.15rem}
+.dfoot{display:flex;gap:8px;flex-wrap:wrap}
+.dfoot .grow{flex:1}
+.snz{display:flex;gap:6px;flex-wrap:wrap}
+
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:20;background:var(--ink);color:var(--bg);border-radius:12px;padding:10px 10px 10px 16px;display:flex;gap:12px;align-items:center;max-width:calc(100% - 32px);box-shadow:0 6px 24px rgba(0,0,0,.25)}
+#toast button{background:none;border:0;color:var(--accent-soft);font-weight:700;cursor:pointer;padding:8px}
+@media (prefers-color-scheme: dark){#toast button{color:var(--accent-ink)}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="grow"><h1 id="ttl">Pendências</h1><div class="date" id="hoje"></div></div>
+    <button class="icon" id="bHist" aria-label="Histórico de resolvidos" title="Histórico"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l3 2"/></svg></button>
+    <button class="icon" id="bCfg" aria-label="Configurações" title="Configurações"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+  </header>
+  <main id="view"></main>
+</div>
+
+<nav class="tabs" aria-label="Seções"><div class="in">
+  <button data-tab="hoje"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/><path d="m9 15 2 2 4-4"/></svg>Hoje<span class="n" hidden></span></button>
+  <button data-tab="metas"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></svg>Metas<span class="n" hidden></span></button>
+  <button data-tab="lembretes"><svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><path d="m3 6 1 1 2-2M3 12l1 1 2-2M3 18l1 1 2-2"/></svg>Lembretes<span class="n" hidden></span></button>
+  <button data-tab="avisos"><svg viewBox="0 0 24 24"><path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8z"/><circle cx="8" cy="8" r="1.5"/></svg>Avisos<span class="n" hidden></span></button>
+</div></nav>
+
+<dialog id="dlg"><form method="dialog" id="frm" novalidate></form></dialog>
+<div id="toast" hidden><span id="toastMsg"></span><button id="toastBtn">Desfazer</button></div>
+<input type="file" id="fileImp" accept="application/json,.json" hidden>
+
+<script src="core.js"></script>
+<script>
+"use strict";
+const $ = (s, el = document) => el.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+const CATS = ["Comprar", "Fazer", "Resolver", "Ligar", "Outro"];
+const DIAS = ["domingo", "segunda", "terça", "quarta", "quinta", "sexta", "sábado"];
+const ICON_CHECK = '<svg viewBox="0 0 24 24"><path d="m5 12 5 5 9-10"/></svg>';
+
+let items = [], settings = { ...DEFAULT_SETTINGS }, tab = "hoje", view = null; // view: null | "cfg" | "hist"
+let quickType = "lembrete", catFilter = "Todos", installEvt = null, swReg = null, periodicOk = null;
+const today = () => ymd(new Date());
+
+// ---------- dados ----------
+async function load() { items = await DB.all(); settings = await getSettings(); }
+async function save(item) { await DB.put(item); const k = items.findIndex(i => i.id === item.id); k >= 0 ? items[k] = item : items.push(item); render(); }
+async function remove(id) { await DB.del(id); items = items.filter(i => i.id !== id); render(); }
+async function saveSettings() { await DB.set("settings", settings); }
+
+function guessCat(t) {
+  const s = t.toLowerCase();
+  if (/^(comprar|compra|pegar no mercado)\b/.test(s)) return "Comprar";
+  if (/^(ligar|telefonar|whats)/.test(s)) return "Ligar";
+  if (/^(pagar|resolver|renovar|agendar|marcar)\b/.test(s)) return "Resolver";
+  return "Fazer";
+}
+function newItem(type, title, extra = {}) {
+  const t = today();
+  const base = { id: uid(), type, title: title.trim(), desc: "", createdAt: new Date().toISOString(), status: "pendente", snoozeUntil: null, resolvedAt: null };
+  if (type === "lembrete") Object.assign(base, { category: guessCat(title), due: null });
+  if (type === "meta") Object.assign(base, { week: mondayOf(t), priority: "media", target: 1, count: 0 });
+  if (type === "aviso") Object.assign(base, { expiry: addDays(t, 7), warnDays: 3 });
+  return Object.assign(base, extra);
+}
+
+// ---------- ações ----------
+async function resolve(it, undo = true) {
+  const prev = { ...it };
+  const n = { ...it, status: "resolvido", resolvedAt: new Date().toISOString() };
+  if (n.type === "meta" && n.target > 1) n.count = n.target;
+  await save(n);
+  if (undo) toast(it.type === "meta" ? `“${it.title}” concluída` : `“${it.title}” resolvido`, () => save(prev));
+}
+async function reopen(it) { await save({ ...it, status: "pendente", resolvedAt: null, ...(it.type === "meta" && it.target > 1 && (it.count || 0) >= it.target ? { count: it.target - 1 } : {}) }); }
+async function del(it) { await remove(it.id); toast(`“${it.title}” apagado`, () => save(it)); }
+async function plusOne(it) {
+  const n = { ...it, count: Math.min((it.count || 0) + 1, it.target) };
+  if (n.count >= n.target) return resolve(n);
+  await save(n);
+}
+async function carryOver(it) {
+  await save({ ...it, status: "naocumprida" });
+  await save(newItem("meta", it.title, { desc: it.desc, priority: it.priority, target: it.target, count: 0, carriedFrom: it.week }));
+}
+const toggleDone = it => it.status === "resolvido" ? reopen(it) : resolve(it);
+
+// ---------- toast ----------
+let toastTimer;
+function toast(msg, undoFn) {
+  const el = $("#toast"); $("#toastMsg").textContent = msg;
+  const b = $("#toastBtn"); b.hidden = !undoFn; b.onclick = () => { el.hidden = true; undoFn && undoFn(); };
+  el.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => el.hidden = true, 5000);
+}
+
+// ---------- itens na tela ----------
+function avisoPill(i, t) {
+  const n = daysBetween(t, i.expiry);
+  if (n < 0) return `<span class="pill n">venceu ${br(i.expiry)}</span>`;
+  const cls = n <= 2 ? "r" : n <= 7 ? "y" : "g";
+  return `<span class="pill ${cls}">${n === 0 ? "Último dia" : n === 1 ? "Falta 1 dia" : `Faltam ${n} dias`}</span>`;
+}
+function linkify(s) {
+  const m = String(s || "").match(/https?:\/\/\S+/);
+  return m ? `<a href="${esc(m[0])}" target="_blank" rel="noopener" data-stop>abrir link</a>` : "";
+}
+function rowHTML(i, opts = {}) {
+  const t = today(), done = i.status === "resolvido";
+  const late = i.type === "lembrete" && !done && i.due && i.due < t;
+  const sub = [];
+  if (i.type === "lembrete") {
+    if (opts.showCat !== false) sub.push(esc(i.category));
+    if (i.due) sub.push(`<span class="due">${late ? "Atrasado · " : "Prazo "}${br(i.due)}</span>`);
+  }
+  if (i.type === "meta") {
+    if (i.target > 1) sub.push(`${i.count || 0} de ${i.target}`);
+    if (opts.week) sub.push(`semana de ${br(i.week)}`);
+  }
+  if (i.type === "aviso") sub.push(`até ${br(i.expiry)}`);
+  if (i.snoozeUntil && i.snoozeUntil > t && !done) sub.push(`adiado até ${br(i.snoozeUntil)}`);
+  if (opts.resolved) sub.unshift({ lembrete: "Lembrete", meta: "Meta", aviso: "Aviso" }[i.type]);
+  if (opts.resolved) sub.push(`resolvido em ${new Date(i.resolvedAt).toLocaleDateString("pt-BR")}`);
+  if (i.desc) { const l = linkify(i.desc); l ? sub.push(l) : sub.push(esc(i.desc.length > 50 ? i.desc.slice(0, 50) + "…" : i.desc)); }
+  let right = "";
+  if (i.type === "aviso" && !done) right = avisoPill(i, t);
+  if (i.type === "meta" && !done && i.target > 1 && !opts.noPlus) right = `<button class="plus" data-act="plus" aria-label="Somar 1">+1</button>`;
+  if (opts.right) right = opts.right;
+  const prio = i.type === "meta" && i.priority === "alta" ? " prio-alta" : "";
+  const bar = i.type === "meta" && i.target > 1 && !done ? `<div class="bar"><i style="width:${Math.round(100 * (i.count || 0) / i.target)}%"></i></div>` : "";
+  return `<div class="row${done ? " isdone" : ""}${late ? " late" : ""}${prio}" data-id="${i.id}">
+    <div class="bgL">✓ Resolver</div><div class="bgR">Apagar 🗑</div>
+    <div class="ri">
+      <button class="chk${done ? " done" : ""}" data-act="toggle" aria-label="${done ? "Voltar para pendente" : "Marcar como resolvido"}"><span>${done ? ICON_CHECK : ""}</span></button>
+      <div class="txt" data-act="edit"><div class="t">${esc(i.title)}</div>${sub.length ? `<div class="s">${sub.join("<span>·</span>")}</div>` : ""}${bar}</div>
+      ${right}
+    </div></div>`;
+}
+const listHTML = (arr, opts, empty) => arr.length ? `<div class="list">${arr.map(i => rowHTML(i, opts)).join("")}</div>` : `<div class="empty">${empty}</div>`;
+
+function sortLembretes(a, b) {
+  const t = today(), la = a.due && a.due < t, lb = b.due && b.due < t;
+  if (la !== lb) return la ? -1 : 1;
+  if (a.due && b.due && a.due !== b.due) return a.due.localeCompare(b.due);
+  if (!!a.due !== !!b.due) return a.due ? -1 : 1;
+  return b.createdAt.localeCompare(a.createdAt);
+}
+const prioN = { alta: 0, media: 1, baixa: 2 };
+const sortMetas = (a, b) => (a.status === "resolvido") - (b.status === "resolvido") || prioN[a.priority] - prioN[b.priority] || a.createdAt.localeCompare(b.createdAt);
+
+// ---------- telas ----------
+function quickHTML() {
+  const types = [["lembrete", "Lembrete"], ["meta", "Meta"], ["aviso", "Aviso"]];
+  const ph = { lembrete: "Ex.: comprar pilha, pagar boleto…", meta: "Ex.: academia 3x, ler 50 páginas…", aviso: "Ex.: promoção de pneus na loja X" }[quickType];
+  return `<form class="card quick" id="quick" autocomplete="off">
+    <div class="seg" role="group" aria-label="Tipo">${types.map(([k, l]) => `<button type="button" data-qt="${k}" aria-pressed="${quickType === k}">${l}</button>`).join("")}</div>
+    <div class="qrow"><input type="text" id="qTitle" placeholder="${ph}" aria-label="O que é?" enterkeyhint="done"><button class="btn" type="submit">Adicionar</button></div>
+    ${quickType === "aviso" ? `<label class="field"><span>Vale até</span><input type="date" id="qDate" value="${addDays(today(), 7)}" min="${today()}"></label>` : ""}
+    <div class="hint">${quickType === "lembrete" ? "Só o título já basta. " : ""}<button type="button" class="link" id="qMore">Mais detalhes</button></div>
+  </form>`;
+}
+function bannersHTML() {
+  let h = "";
+  if ("Notification" in window && Notification.permission === "default") h += `<div class="card banner"><p><b>Ative as notificações.</b> É assim que o app te lembra todo dia do que ainda está pendente, até você marcar como resolvido.</p><div class="acts"><button class="btn" data-act="perm">Permitir notificações</button></div></div>`;
+  if ("Notification" in window && Notification.permission === "denied") h += `<div class="card banner"><p><b>As notificações estão bloqueadas.</b> Libere em Configurações do Android › Apps › Pendências (ou Chrome) › Notificações.</p></div>`;
+  if (installEvt) h += `<div class="card banner"><p><b>Instale o app na tela inicial</b> para abrir com um toque e receber os lembretes.</p><div class="acts"><button class="btn" data-act="install">Instalar</button></div></div>`;
+  else if (isIOS() && !isStandalone()) h += `<div class="card banner"><p><b>No iPhone:</b> toque em Compartilhar e depois em “Adicionar à Tela de Início”. As notificações só funcionam assim.</p></div>`;
+  return h;
+}
+function renderHoje() {
+  const t = today();
+  const L = items.filter(i => i.type === "lembrete" && i.status === "pendente" && !(i.snoozeUntil && i.snoozeUntil > t)).sort(sortLembretes);
+  const Mw = items.filter(i => metaDaSemana(i, t) && i.status !== "naocumprida");
+  const Mo = Mw.filter(i => i.status === "pendente").sort(sortMetas);
+  const A = items.filter(i => avisoAtivo(i, t) && daysBetween(t, i.expiry) <= Math.max(7, i.warnDays ?? 3)).sort((a, b) => a.expiry.localeCompare(b.expiry));
+  const doneW = Mw.filter(i => i.status === "resolvido").length;
+  const nothing = !L.length && !Mo.length && !A.length;
+  return quickHTML() + bannersHTML() +
+    (nothing ? `<section class="blk"><div class="empty">Nada pendente por aqui. 🎉</div></section>` : "") +
+    (A.length ? `<section class="blk"><h2>Avisos vencendo <small>${A.length}</small></h2>${listHTML(A, {}, "")}</section>` : "") +
+    (L.length ? `<section class="blk"><h2>Lembretes <small>${L.length}</small></h2>${listHTML(L, {}, "")}</section>` : "") +
+    (Mw.length ? `<section class="blk"><h2>Metas da semana <small>${doneW} de ${Mw.length} concluídas</small><span class="sp"></span><button class="btn ghost sm" data-go="metas">ver todas</button></h2>${listHTML(Mo, {}, "Todas as metas da semana concluídas. 💪")}</section>` : "") +
+    `<p class="hint" style="margin-top:22px">Dica: arraste um item para a direita para resolver, ou para a esquerda para apagar.</p>`;
+}
+function renderMetas() {
+  const t = today(), w = mondayOf(t), sun = addDays(w, 6);
+  const Mw = items.filter(i => i.type === "meta" && i.week === w && i.status !== "naocumprida").sort(sortMetas);
+  const done = Mw.filter(i => i.status === "resolvido").length, pct = Mw.length ? Math.round(100 * done / Mw.length) : 0;
+  const next = items.filter(i => i.type === "meta" && i.week > w).sort(sortMetas);
+  const missed = items.filter(i => i.type === "meta" && i.week < w && i.status === "pendente").sort((a, b) => b.week.localeCompare(a.week));
+  const lw = addDays(w, -7), lastW = items.filter(i => i.type === "meta" && i.week === lw);
+  const lastDone = lastW.filter(i => i.status === "resolvido").length;
+  return `<div class="card prog"><div class="big">${done}/${Mw.length}</div><div style="flex:1"><b>Semana de ${br(w).slice(0, 5)} a ${br(sun).slice(0, 5)}</b><div class="hint">${Mw.length ? `${pct}% das metas concluídas` : "Nenhuma meta ainda para esta semana"}</div><div class="bar"><i style="width:${pct}%"></i></div></div></div>
+    <section class="blk"><h2>Esta semana<span class="sp"></span><button class="btn sm" data-new="meta">+ Nova meta</button></h2>${listHTML(Mw, {}, "Cadastre as metas da semana. Você recebe um resumo diário das que faltam.")}</section>
+    ${missed.length ? `<section class="blk"><h2>Não cumpridas <small>${missed.length}</small><span class="sp"></span><button class="btn ghost sm" data-act="carryall">Levar todas</button></h2>${listHTML(missed, { week: true, noPlus: true, right: `<button class="btn sec sm" data-act="carry">Levar p/ esta semana</button>` }, "")}<p class="hint">Metas de semanas passadas que ficaram em aberto. “Levar” cria a mesma meta nesta semana. Para descartar, arraste para a esquerda.</p></section>` : ""}
+    ${next.length ? `<section class="blk"><h2>Próximas semanas</h2>${listHTML(next, { week: true }, "")}</section>` : ""}
+    ${lastW.length ? `<p class="hint" style="margin-top:22px">Semana passada: ${lastDone} de ${lastW.length} metas cumpridas.</p>` : ""}`;
+}
+function renderLembretes() {
+  const t = today();
+  const all = items.filter(i => i.type === "lembrete");
+  const pend = all.filter(i => i.status === "pendente");
+  const cats = ["Todos", ...CATS];
+  const counts = Object.fromEntries(cats.map(c => [c, pend.filter(i => c === "Todos" || i.category === c).length]));
+  const f = i => catFilter === "Todos" || i.category === catFilter;
+  const act = pend.filter(i => f(i) && !(i.snoozeUntil && i.snoozeUntil > t)).sort(sortLembretes);
+  const snz = pend.filter(i => f(i) && i.snoozeUntil && i.snoozeUntil > t).sort((a, b) => a.snoozeUntil.localeCompare(b.snoozeUntil));
+  const compras = catFilter === "Comprar";
+  const boughtRecent = compras ? all.filter(i => i.category === "Comprar" && i.status === "resolvido" && Date.now() - Date.parse(i.resolvedAt) < 2 * 86400000) : [];
+  return `<div class="chips" role="group" aria-label="Filtrar por categoria">${cats.map(c => `<button data-cat="${c}" aria-pressed="${catFilter === c}">${c === "Comprar" ? "🛒 Lista de compras" : c}${counts[c] ? ` · ${counts[c]}` : ""}</button>`).join("")}</div>
+    <section class="blk"><h2>${compras ? "Lista de compras" : "Pendentes"} <small>${act.length}</small><span class="sp"></span><button class="btn sm" data-new="lembrete">+ Novo</button></h2>${listHTML(act, { showCat: catFilter === "Todos" }, compras ? "Nada para comprar." : "Nenhum lembrete pendente.")}</section>
+    ${boughtRecent.length ? `<section class="blk"><h2>Já comprados <small>últimos 2 dias</small></h2>${listHTML(boughtRecent, { showCat: false }, "")}</section>` : ""}
+    ${snz.length ? `<section class="blk"><h2>Adiados <small>${snz.length}</small></h2>${listHTML(snz, { showCat: catFilter === "Todos" }, "")}</section>` : ""}`;
+}
+function renderAvisos() {
+  const t = today();
+  const act = items.filter(i => avisoAtivo(i, t)).sort((a, b) => a.expiry.localeCompare(b.expiry));
+  const exp = items.filter(i => avisoExpirado(i, t)).sort((a, b) => b.expiry.localeCompare(a.expiry));
+  return `<section class="blk" style="margin-top:6px"><h2>Ativos <small>${act.length}</small><span class="sp"></span><button class="btn sm" data-new="aviso">+ Novo aviso</button></h2>${listHTML(act, {}, "Cadastre promoções, prazos e ofertas com a data de validade. O app avisa quando estiver acabando.")}</section>
+    ${exp.length ? `<section class="blk"><h2>Expirados <small>${exp.length}</small></h2>${listHTML(exp, { right: `<button class="btn sec sm" data-act="reactivate">Reativar</button>` }, "")}<p class="hint">Arraste para a esquerda para apagar.</p></section>` : ""}`;
+}
+function renderHist() {
+  const r = items.filter(i => i.status === "resolvido").sort((a, b) => b.resolvedAt.localeCompare(a.resolvedAt));
+  return `<section class="blk" style="margin-top:6px"><h2>Resolvidos <small>${r.length}</small><span class="sp"></span><button class="btn ghost sm" data-back>← Voltar</button></h2>
+    ${listHTML(r, { resolved: true, noPlus: true }, "Nada resolvido ainda.")}
+    ${r.length ? `<p class="hint">Toque no círculo para voltar um item para pendente. <button class="link" data-act="clearhist">Apagar histórico com mais de 30 dias</button></p>` : ""}</section>`;
+}
+function renderCfg() {
+  const perm = "Notification" in window ? Notification.permission : "unsupported";
+  const permTxt = { granted: ["on", "Permitidas"], denied: ["off", "Bloqueadas"], default: ["", "Ainda não permitidas"], unsupported: ["off", "Este navegador não suporta notificações"] }[perm];
+  const bg = periodicOk === true ? ["on", "Ativa (o Android decide os horários exatos)"] : periodicOk === false ? ["off", "Indisponível: instale o app pelo Chrome no Android"] : ["", "Verificando…"];
+  return `<div class="set">
+  <div style="display:flex;justify-content:flex-end"><button class="btn ghost sm" data-back>← Voltar</button></div>
+  <div class="card set">
+    <h3>Notificações</h3>
+    <div class="status ${permTxt[0]}">${permTxt[1]}</div>
+    ${perm === "default" ? `<button class="btn" data-act="perm">Permitir notificações</button>` : ""}
+    ${perm === "denied" ? `<p class="hint">Para liberar: Configurações do Android › Apps › Pendências (ou Chrome) › Notificações › Permitir.</p>` : ""}
+    <div class="two"><label class="field"><span>Resumo diário às</span><input type="time" id="cT1" value="${settings.time1}"></label>
+    <label class="field"><span>Segundo horário</span><input type="time" id="cT2" value="${settings.time2}" ${settings.time2On ? "" : "disabled"}></label></div>
+    <label class="sw"><span>Usar segundo horário</span><input type="checkbox" id="cT2On" ${settings.time2On ? "checked" : ""}></label>
+    <label class="sw"><span>Incluir lembretes</span><input type="checkbox" id="cNL" ${settings.notifyLembrete ? "checked" : ""}></label>
+    <label class="sw"><span>Incluir metas da semana</span><input type="checkbox" id="cNM" ${settings.notifyMeta ? "checked" : ""}></label>
+    <label class="sw"><span>Incluir avisos vencendo</span><input type="checkbox" id="cNA" ${settings.notifyAviso ? "checked" : ""}></label>
+    <button class="btn sec" data-act="test">Enviar notificação de teste</button>
+    <div><div class="hint">Verificação em segundo plano</div><div class="status ${bg[0]}">${bg[1]}</div></div>
+    <details><summary>Como garantir que o lembrete chegue (Android)</summary>
+      <ol>
+        <li>Instale o app pelo Chrome (menu ⋮ › Instalar app ou Adicionar à tela inicial).</li>
+        <li>Permita as notificações quando o app pedir.</li>
+        <li>Em Configurações do Android › Apps › Chrome › Bateria, escolha <b>Sem restrições</b> (ou desative a otimização de bateria). Em Xiaomi, Samsung e Motorola, também libere “Início automático” / “Apps em suspensão” se existir.</li>
+        <li>Abra o app pelo menos uma vez por dia nos primeiros dias: o Chrome aumenta a frequência das verificações para apps que você usa.</li>
+      </ol>
+      <p class="hint">Sem servidor, o Chrome acorda o app algumas vezes por dia, mas não no minuto exato. O resumo sai na primeira verificação depois do horário escolhido, ou assim que você abrir o app. Para horário mais preciso, ative o push abaixo.</p>
+    </details>
+    <details id="pushBox"><summary>Push diário mais confiável (opcional)</summary>
+      <p class="hint">Um agendador gratuito do GitHub manda um “toque” no horário certo e o app monta o resumo com os dados que estão no celular. Nada das suas pendências sai do aparelho.</p>
+      <div id="pushArea"></div>
+    </details>
+  </div>
+  <div class="card set">
+    <h3>Backup</h3>
+    <p class="hint" style="margin:0">Tudo fica salvo só neste aparelho. Exporte um backup de vez em quando, principalmente antes de trocar de celular ou limpar os dados do navegador.</p>
+    <div class="two"><button class="btn sec" data-act="export">Exportar backup</button><button class="btn sec" data-act="import">Importar backup</button></div>
+    <div class="hint" id="persistTxt"></div>
+  </div>
+  <div class="card set">
+    <h3>App</h3>
+    ${installEvt ? `<button class="btn" data-act="install">Instalar na tela inicial</button>` : isStandalone() ? `<div class="status on">Instalado na tela inicial</div>` : isIOS() ? `<p class="hint" style="margin:0">No iPhone: Compartilhar › Adicionar à Tela de Início (iOS 16.4 ou mais novo para notificações).</p>` : `<p class="hint" style="margin:0">Para instalar, abra no Chrome e use o menu ⋮ › Instalar app.</p>`}
+    <p class="hint" style="margin:0">Pendências · versão 1.0</p>
+  </div></div>`;
+}
+const RENDER = { hoje: renderHoje, metas: renderMetas, lembretes: renderLembretes, avisos: renderAvisos };
+const TITLES = { hoje: "Pendências", metas: "Metas da semana", lembretes: "Lembretes", avisos: "Avisos", cfg: "Configurações", hist: "Histórico" };
+
+function render() {
+  const t = today(), d = new Date();
+  $("#hoje").textContent = `${DIAS[d.getDay()]}, ${br(t)}`;
+  $("#ttl").textContent = TITLES[view || tab];
+  const keepFocus = document.activeElement && document.activeElement.id === "qTitle" ? $("#qTitle").value : null;
+  $("#view").innerHTML = view === "cfg" ? renderCfg() : view === "hist" ? renderHist() : RENDER[tab]();
+  if (keepFocus !== null && $("#qTitle")) { $("#qTitle").value = keepFocus; $("#qTitle").focus(); }
+  if (view === "cfg") afterCfg();
+  document.querySelectorAll("nav.tabs button").forEach(b => b.setAttribute("aria-current", !view && b.dataset.tab === tab ? "page" : "false"));
+  const n = {
+    hoje: badgeCount(items, t),
+    metas: items.filter(i => metaAberta(i, t)).length,
+    lembretes: items.filter(i => lembreteAtivo(i, t)).length,
+    avisos: items.filter(i => avisoVencendo(i, t)).length,
+  };
+  document.querySelectorAll("nav.tabs button").forEach(b => { const el = $(".n", b), v = n[b.dataset.tab]; el.hidden = !v || b.dataset.tab === "hoje"; el.textContent = v; });
+  try { if ("setAppBadge" in navigator) n.hoje ? navigator.setAppBadge(n.hoje) : navigator.clearAppBadge(); } catch (e) {}
+}
+function go(t) { tab = t; view = null; render(); scrollTo(0, 0); }
+
+// ---------- formulário completo ----------
+function openForm(it, isNew) {
+  const f = $("#frm"), t = today(), w = mondayOf(t);
+  const T = it.type;
+  const nome = { lembrete: "lembrete", meta: "meta", aviso: "aviso" }[T];
+  const weekOpts = [[w, "Esta semana"], [addDays(w, 7), "Próxima semana"]];
+  if (it.week && !weekOpts.some(o => o[0] === it.week)) weekOpts.unshift([it.week, `Semana de ${br(it.week)}`]);
+  f.innerHTML = `<h2>${isNew ? (T === "meta" ? "Nova meta" : "Novo " + nome) : "Editar " + nome}</h2>
+    ${isNew ? `<div class="seg" role="group" aria-label="Tipo">${["lembrete", "meta", "aviso"].map(k => `<button type="button" data-ft="${k}" aria-pressed="${T === k}">${k[0].toUpperCase() + k.slice(1)}</button>`).join("")}</div>` : ""}
+    <label class="field"><span>Título</span><input type="text" name="title" value="${esc(it.title)}" required></label>
+    ${T === "lembrete" ? `<div class="two"><label class="field"><span>Categoria</span><select name="category">${CATS.map(c => `<option ${it.category === c ? "selected" : ""}>${c}</option>`).join("")}</select></label>
+      <label class="field"><span>Prazo (opcional)</span><input type="date" name="due" value="${it.due || ""}"></label></div>` : ""}
+    ${T === "meta" ? `<div class="two"><label class="field"><span>Semana</span><select name="week">${weekOpts.map(([v, l]) => `<option value="${v}" ${it.week === v ? "selected" : ""}>${l}</option>`).join("")}</select></label>
+      <label class="field"><span>Prioridade</span><select name="priority">${[["alta", "Alta"], ["media", "Média"], ["baixa", "Baixa"]].map(([v, l]) => `<option value="${v}" ${it.priority === v ? "selected" : ""}>${l}</option>`).join("")}</select></label></div>
+      <label class="field"><span>Quantas vezes na semana</span><input type="number" name="target" min="1" max="50" value="${it.target || 1}" inputmode="numeric"></label>` : ""}
+    ${T === "aviso" ? `<div class="two"><label class="field"><span>Vale até</span><input type="date" name="expiry" value="${it.expiry || ""}" required></label>
+      <label class="field"><span>Avisar quantos dias antes</span><input type="number" name="warnDays" min="0" max="60" value="${it.warnDays ?? 3}" inputmode="numeric"></label></div>` : ""}
+    <label class="field"><span>${T === "aviso" ? "Detalhes ou link" : "Observação"} (opcional)</span><textarea name="desc">${esc(it.desc)}</textarea></label>
+    ${!isNew && it.status === "pendente" ? `<div class="field"><span>Adiar notificações</span><div class="snz">
+      <button type="button" class="btn sec sm" data-snz="1">Volta amanhã</button><button type="button" class="btn sec sm" data-snz="3">Em 3 dias</button><button type="button" class="btn sec sm" data-snz="7">Em 1 semana</button>
+      ${it.snoozeUntil && it.snoozeUntil > t ? `<button type="button" class="btn ghost sm" data-snz="0">Cancelar adiamento</button>` : ""}</div></div>` : ""}
+    <p class="hint" id="fErr" hidden style="color:var(--danger);margin:0"></p>
+    <div class="dfoot">
+      ${!isNew ? `<button type="button" class="btn danger" data-fdel>Apagar</button>` : ""}
+      <span class="grow"></span>
+      <button type="button" class="btn sec" data-fcancel>Cancelar</button>
+      <button type="submit" class="btn">${isNew ? "Adicionar" : "Salvar"}</button>
+    </div>
+    ${!isNew && it.status !== "resolvido" ? `<button type="button" class="btn sec wrap" data-fres>✓ Marcar como ${T === "meta" ? "concluída" : "resolvido"}${T === "aviso" ? " (já aproveitei / não interessa)" : ""}</button>` : ""}`;
+  const read = () => {
+    const fd = new FormData(f), n = { ...it, title: (fd.get("title") || "").trim(), desc: (fd.get("desc") || "").trim() };
+    if (T === "lembrete") Object.assign(n, { category: fd.get("category"), due: fd.get("due") || null });
+    if (T === "meta") Object.assign(n, { week: fd.get("week"), priority: fd.get("priority"), target: Math.max(1, parseInt(fd.get("target")) || 1) });
+    if (T === "aviso") Object.assign(n, { expiry: fd.get("expiry"), warnDays: Math.max(0, parseInt(fd.get("warnDays")) || 0) });
+    return n;
+  };
+  f.onclick = async e => {
+    const b = e.target.closest("button"); if (!b) return;
+    if (b.dataset.ft) { const n = read(); const m = newItem(b.dataset.ft, n.title || "", { id: it.id, desc: n.desc }); return openForm(m, true); }
+    if (b.hasAttribute("data-fcancel")) return $("#dlg").close();
+    if (b.hasAttribute("data-fdel")) { $("#dlg").close(); return del(it); }
+    if (b.hasAttribute("data-fres")) { $("#dlg").close(); return resolve(it); }
+    if (b.dataset.snz) {
+      const d = +b.dataset.snz, n = { ...read(), snoozeUntil: d ? addDays(today(), d) : null };
+      $("#dlg").close(); await save(n);
+      return toast(d ? `Adiado até ${br(n.snoozeUntil)}` : "Adiamento cancelado");
+    }
+  };
+  f.onsubmit = async e => {
+    e.preventDefault();
+    const n = read(), err = $("#fErr");
+    const msg = !n.title ? "Escreva um título." : T === "aviso" && !n.expiry ? "Informe até quando o aviso vale." : "";
+    if (msg) { err.textContent = msg; err.hidden = false; return; }
+    if (T === "meta" && n.target > 1 && (n.count || 0) >= n.target && n.status === "pendente") n.count = n.target - 1;
+    if (T === "aviso" && n.status === "pendente" && n.expiry >= today()) n.snoozeUntil = it.expiry !== n.expiry ? null : n.snoozeUntil;
+    $("#dlg").close(); await save(n);
+    if (isNew) toast({ lembrete: "Lembrete adicionado", meta: "Meta adicionada", aviso: "Aviso adicionado" }[T]);
+  };
+  if (!$("#dlg").open) $("#dlg").showModal();
+  if (isNew) setTimeout(() => f.elements.title.focus(), 50);
+}
+
+// ---------- eventos ----------
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-tab],[data-go],[data-new],[data-qt],[data-cat],[data-act],[data-back],#qMore,#bCfg,#bHist");
+  if (!b || e.target.closest("[data-stop]")) return;
+  if (b.closest(".row") && swipedRecently) return;
+  if (b.dataset.tab) return go(b.dataset.tab);
+  if (b.dataset.go) return go(b.dataset.go);
+  if (b.hasAttribute("data-back")) { view = null; return render(); }
+  if (b.id === "bCfg") { view = view === "cfg" ? null : "cfg"; render(); return scrollTo(0, 0); }
+  if (b.id === "bHist") { view = view === "hist" ? null : "hist"; render(); return scrollTo(0, 0); }
+  if (b.dataset.new) return openForm(newItem(b.dataset.new, ""), true);
+  if (b.dataset.qt) { quickType = b.dataset.qt; render(); return $("#qTitle").focus(); }
+  if (b.dataset.cat) { catFilter = b.dataset.cat; return render(); }
+  if (b.id === "qMore") {
+    const extra = quickType === "aviso" && $("#qDate") ? { expiry: $("#qDate").value } : {};
+    return openForm(newItem(quickType, $("#qTitle").value, extra), true);
+  }
+  const row = b.closest(".row"), it = row && items.find(i => i.id === row.dataset.id);
+  switch (b.dataset.act) {
+    case "toggle": return toggleDone(it);
+    case "edit": return openForm({ ...it }, false);
+    case "plus": return plusOne(it);
+    case "carry": await carryOver(it); return toast("Meta levada para esta semana");
+    case "carryall": { const w = mondayOf(today()); for (const m of items.filter(i => i.type === "meta" && i.week < w && i.status === "pendente")) await carryOver(m); return toast("Metas levadas para esta semana"); }
+    case "reactivate": return openForm({ ...it, expiry: addDays(today(), 7), snoozeUntil: null }, false);
+    case "perm": return askPermission();
+    case "install": if (installEvt) { installEvt.prompt(); await installEvt.userChoice; installEvt = null; render(); } return;
+    case "test": return testNotification();
+    case "export": return exportBackup();
+    case "import": return $("#fileImp").click();
+    case "clearhist": {
+      const lim = Date.now() - 30 * 86400000, old = items.filter(i => i.status === "resolvido" && Date.parse(i.resolvedAt) < lim);
+      if (!old.length) return toast("Nada com mais de 30 dias");
+      if (!confirm(`Apagar ${old.length} itens resolvidos há mais de 30 dias?`)) return;
+      for (const i of old) await DB.del(i.id);
+      items = items.filter(i => !old.includes(i)); render(); return toast("Histórico antigo apagado");
+    }
+    case "pushOn": return enablePush();
+    case "pushOff": return disablePush();
+    case "pushCopy": { const ta = $("#pushCfg"); ta.select(); try { await navigator.clipboard.writeText(ta.value); } catch (x) { document.execCommand("copy"); } return toast("Copiado"); }
+  }
+});
+document.addEventListener("submit", async e => {
+  if (e.target.id !== "quick") return;
+  e.preventDefault();
+  const title = $("#qTitle").value.trim();
+  if (!title) return $("#qTitle").focus();
+  const extra = quickType === "aviso" ? { expiry: $("#qDate").value || addDays(today(), 7) } : {};
+  await save(newItem(quickType, title, extra));
+  $("#qTitle").value = ""; $("#qTitle").focus();
+  toast({ lembrete: "Lembrete adicionado", meta: "Meta adicionada", aviso: "Aviso adicionado" }[quickType]);
+});
+$("#dlg").addEventListener("click", e => { if (e.target === $("#dlg")) $("#dlg").close(); });
+
+// Arrastar: direita resolve, esquerda apaga.
+let drag = null, swipedRecently = false;
+document.addEventListener("pointerdown", e => {
+  const ri = e.target.closest(".ri"); if (!ri || e.target.closest("input,select,textarea,a")) return;
+  drag = { ri, x: e.clientX, y: e.clientY, dx: 0, on: false, id: e.pointerId };
+});
+document.addEventListener("pointermove", e => {
+  if (!drag || e.pointerId !== drag.id) return;
+  const dx = e.clientX - drag.x, dy = e.clientY - drag.y;
+  if (!drag.on) { if (Math.abs(dy) > 12) { drag = null; return; } if (Math.abs(dx) < 12) return; drag.on = true; drag.ri.classList.remove("anim"); try { drag.ri.setPointerCapture(e.pointerId); } catch (x) {} }
+  drag.dx = dx; drag.ri.style.transform = `translateX(${dx}px)`;
+  const row = drag.ri.parentElement; $(".bgL", row).style.visibility = dx > 0 ? "visible" : "hidden"; $(".bgR", row).style.visibility = dx < 0 ? "visible" : "hidden";
+});
+function endDrag() {
+  if (!drag) return;
+  const { ri, dx, on } = drag; drag = null;
+  if (!on) return;
+  swipedRecently = true; setTimeout(() => swipedRecently = false, 300);
+  const row = ri.parentElement, it = items.find(i => i.id === row.dataset.id), lim = Math.min(110, row.offsetWidth * 0.3);
+  ri.classList.add("anim");
+  if (dx > lim && it) { ri.style.transform = `translateX(${row.offsetWidth}px)`; setTimeout(() => toggleDone(it), 180); }
+  else if (dx < -lim && it) { ri.style.transform = `translateX(${-row.offsetWidth}px)`; setTimeout(() => del(it), 180); }
+  else { ri.style.transform = ""; setTimeout(() => row.querySelectorAll(".bgL,.bgR").forEach(el => el.style.visibility = ""), 200); }
+}
+document.addEventListener("pointerup", endDrag);
+document.addEventListener("pointercancel", endDrag);
+
+// ---------- configurações ----------
+function afterCfg() {
+  const bind = (id, fn) => { const el = $("#" + id); el && el.addEventListener("change", async () => { fn(el); await saveSettings(); render(); scheduleInApp(); }); };
+  bind("cT1", el => settings.time1 = el.value || "08:00");
+  bind("cT2", el => settings.time2 = el.value || "19:00");
+  bind("cT2On", el => settings.time2On = el.checked);
+  bind("cNL", el => settings.notifyLembrete = el.checked);
+  bind("cNM", el => settings.notifyMeta = el.checked);
+  bind("cNA", el => settings.notifyAviso = el.checked);
+  if (navigator.storage && navigator.storage.persisted) navigator.storage.persisted().then(p => { const el = $("#persistTxt"); if (el) el.textContent = p ? "Armazenamento protegido: o navegador não apaga seus dados para liberar espaço." : "O navegador ainda não marcou os dados como protegidos. Instalar o app ajuda."; });
+  renderPush();
+}
+async function askPermission() {
+  if (!("Notification" in window)) return toast("Este navegador não suporta notificações");
+  const p = await Notification.requestPermission();
+  render();
+  if (p === "granted") { await setupBackground(); toast("Notificações ativadas"); }
+}
+async function testNotification() {
+  if (!("Notification" in window) || Notification.permission !== "granted") { await askPermission(); if (Notification.permission !== "granted") return; }
+  const reg = await navigator.serviceWorker.ready;
+  await maybeNotify(reg, { force: true, test: true });
+  toast("Notificação enviada. Confira a barra do celular.");
+}
+
+// ---------- backup ----------
+async function exportBackup() {
+  const data = { app: "pendencias", version: 1, exportedAt: new Date().toISOString(), settings, items };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  const name = `pendencias-backup-${today()}.json`;
+  const file = new File([blob], name, { type: "application/json" });
+  if (navigator.canShare && navigator.canShare({ files: [file] }) && /Android|iPhone|iPad/i.test(navigator.userAgent)) {
+    try { await navigator.share({ files: [file], title: name }); return; } catch (e) { if (e.name === "AbortError") return; }
+  }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name; a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+$("#fileImp").addEventListener("change", async e => {
+  const f = e.target.files[0]; e.target.value = ""; if (!f) return;
+  try {
+    const data = JSON.parse(await f.text());
+    if (data.app !== "pendencias" || !Array.isArray(data.items)) throw new Error("formato");
+    if (!confirm(`Importar ${data.items.length} itens? Itens que já existem aqui são atualizados; os outros são mantidos.`)) return;
+    for (const i of data.items) if (i && i.id && i.type && i.title) await DB.put(i);
+    if (data.settings) { settings = { ...DEFAULT_SETTINGS, ...data.settings }; await saveSettings(); }
+    await load(); render(); toast(`${data.items.length} itens importados`);
+  } catch (err) { alert("Não consegui ler esse arquivo. Escolha um backup exportado pelo Pendências."); }
+});
+
+// ---------- push opcional ----------
+const b64url = buf => btoa(String.fromCharCode(...new Uint8Array(buf))).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+async function renderPush() {
+  const area = $("#pushArea"); if (!area) return;
+  const cfg = await DB.get("push");
+  if (!("PushManager" in window)) { area.innerHTML = `<p class="hint">Este navegador não suporta push. No iPhone, instale o app na Tela de Início (iOS 16.4+).</p>`; return; }
+  if (!cfg) { area.innerHTML = `<button class="btn sec" data-act="pushOn">Gerar chaves e ativar push neste celular</button>`; return; }
+  const json = JSON.stringify(cfg);
+  area.innerHTML = `<div class="status on">Push ativado neste celular</div>
+    <ol class="hint">
+      <li>Toque em <b>Copiar configuração</b>.</li>
+      <li>No GitHub, abra o repositório do app › <b>Settings</b> › <b>Secrets and variables</b> › <b>Actions</b> › <b>New repository secret</b>.</li>
+      <li>Nome: <b class="mono">PUSH_CONFIG</b>. Valor: cole o que copiou. Salve.</li>
+      <li>Vá em <b>Actions</b> › “Pendências - resumo diário (push)” › <b>Run workflow</b> para testar. A notificação deve chegar em até 1 minuto.</li>
+    </ol>
+    <p class="hint">Essa configuração contém uma chave secreta. Guarde só no secret do GitHub; não publique em arquivo.</p>
+    <textarea id="pushCfg" class="mono" readonly rows="4">${esc(json)}</textarea>
+    <div class="two"><button class="btn" data-act="pushCopy">Copiar configuração</button><button class="btn danger" data-act="pushOff">Desativar push</button></div>`;
+}
+async function enablePush() {
+  if (Notification.permission !== "granted") { await askPermission(); if (Notification.permission !== "granted") return; }
+  try {
+    const reg = await navigator.serviceWorker.ready;
+    const kp = await crypto.subtle.generateKey({ name: "ECDSA", namedCurve: "P-256" }, true, ["sign", "verify"]);
+    const pub = await crypto.subtle.exportKey("raw", kp.publicKey);
+    const jwk = await crypto.subtle.exportKey("jwk", kp.privateKey);
+    const old = await reg.pushManager.getSubscription(); if (old) await old.unsubscribe();
+    const sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: new Uint8Array(pub) });
+    const subject = location.protocol === "https:" ? location.origin : "mailto:pendencias@example.com";
+    await DB.set("push", { subject, publicKey: b64url(pub), privateKey: jwk.d, subscription: sub.toJSON() });
+    renderPush(); toast("Push ativado. Agora copie a configuração para o GitHub.");
+  } catch (err) { alert("Não foi possível ativar o push: " + err.message); }
+}
+async function disablePush() {
+  if (!confirm("Desativar o push neste celular? O GitHub vai parar de conseguir te avisar.")) return;
+  const reg = await navigator.serviceWorker.ready, s = await reg.pushManager.getSubscription();
+  if (s) await s.unsubscribe();
+  await DB.set("push", null); renderPush(); toast("Push desativado");
+}
+
+// ---------- notificações e segundo plano ----------
+const isIOS = () => /iPhone|iPad|iPod/i.test(navigator.userAgent);
+const isStandalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+async function setupBackground() {
+  if (!swReg) return;
+  try {
+    if ("periodicSync" in swReg) {
+      const st = await navigator.permissions.query({ name: "periodic-background-sync" });
+      if (st.state === "granted") { await swReg.periodicSync.register("resumo-diario", { minInterval: 60 * 60 * 1000 }); periodicOk = true; }
+      else periodicOk = false;
+    } else periodicOk = false;
+  } catch (e) { periodicOk = false; }
+  if (view === "cfg") render();
+}
+// Com o app aberto: confere agora e marca um alarme para o próximo horário.
+let inAppTimer;
+async function scheduleInApp() {
+  clearTimeout(inAppTimer);
+  if (!swReg || !("Notification" in window) || Notification.permission !== "granted") return;
+  await maybeNotify(swReg);
+  const now = new Date(), ts = [settings.time1, settings.time2On && settings.time2].filter(Boolean).map(t => { const [h, m] = t.split(":").map(Number); const d = new Date(now); d.setHours(h, m, 0, 0); if (d <= now) d.setDate(d.getDate() + 1); return d - now; });
+  inAppTimer = setTimeout(scheduleInApp, Math.min(...ts) + 1000);
+}
+
+// ---------- início ----------
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; render(); });
+window.addEventListener("appinstalled", () => { installEvt = null; render(); setupBackground(); });
+document.addEventListener("visibilitychange", async () => { if (document.visibilityState === "visible") { await load(); render(); scheduleInApp(); } });
+
+(async function init() {
+  await load();
+  const q = new URLSearchParams(location.search);
+  if (["hoje", "metas", "lembretes", "avisos"].includes(q.get("aba"))) tab = q.get("aba");
+  render();
+  if (["lembrete", "meta", "aviso"].includes(q.get("novo"))) { tab = "hoje"; quickType = q.get("novo"); render(); $("#qTitle").focus(); }
+  const shared = [q.get("title"), q.get("text"), q.get("url")].filter(Boolean);
+  if (shared.length) {
+    // Compartilhado de outro app (ex.: link de promoção): vira um aviso.
+    const title = q.get("title") || (q.get("text") || "").replace(/https?:\/\/\S+/, "").trim() || "Promoção";
+    const desc = [q.get("text") !== title ? q.get("text") : "", q.get("url")].filter(Boolean).join("\n");
+    openForm(newItem("aviso", title.slice(0, 120), { desc }), true);
+  }
+  if (q.toString()) history.replaceState(null, "", location.pathname);
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+  if ("serviceWorker" in navigator) {
+    try {
+      await navigator.serviceWorker.register("sw.js");
+      swReg = await navigator.serviceWorker.ready;
+      navigator.serviceWorker.addEventListener("message", async e => { if (e.data && e.data.type === "recarregar") { await load(); render(); } });
+      await setupBackground();
+      scheduleInApp();
+    } catch (e) { console.warn("Service worker não registrado", e); }
+  }
+  // Virou o dia com o app aberto: atualiza a tela.
+  setInterval(() => { if ($("#hoje").textContent.indexOf(br(today())) < 0) render(); }, 60000);
+})();
+</script>
+</body>
+</html>

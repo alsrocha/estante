@@ -1,0 +1,29 @@
+{
+  "name": "Pendências: metas, lembretes e avisos",
+  "short_name": "Pendências",
+  "description": "Anote o que precisa fazer, comprar ou acompanhar e seja lembrado todo dia até resolver.",
+  "lang": "pt-BR",
+  "id": "./",
+  "start_url": "./?aba=hoje",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f3f2ee",
+  "theme_color": "#3d3fb0",
+  "icons": [
+    {"src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "icons/icon-192-maskable.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable"},
+    {"src": "icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ],
+  "shortcuts": [
+    {"name": "Novo lembrete", "short_name": "Lembrete", "url": "./?novo=lembrete", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Novo aviso", "short_name": "Aviso", "url": "./?novo=aviso", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]},
+    {"name": "Nova meta", "short_name": "Meta", "url": "./?novo=meta", "icons": [{"src": "icons/icon-192.png", "sizes": "192x192"}]}
+  ],
+  "share_target": {
+    "action": "./",
+    "method": "GET",
+    "params": {"title": "title", "text": "text", "url": "url"}
+  }
+}
